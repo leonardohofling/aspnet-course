@@ -37,7 +37,10 @@ namespace OrderService.Services.API.Controllers
             if (ModelState.IsValid)
             {
                 var resultOrder = orderService.CreateOrder(mapper.Map<Order>(order));
-                return Created($"/api/orders/{resultOrder.Code}", mapper.Map<OrderViewModel>(resultOrder));
+                if (resultOrder.IsValid)
+                    return Created($"/api/orders/{resultOrder.Model.Code}", mapper.Map<OrderViewModel>(resultOrder.Model));
+                else
+                    return BadRequest(resultOrder.Errors);
             }
 
             return BadRequest(ModelState);

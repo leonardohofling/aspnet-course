@@ -9,7 +9,7 @@ namespace OrderService.Domain.Services
 {
     public interface IOrderService
     {
-        Order CreateOrder(Order order);
+        ValidationResult<Order> CreateOrder(Order order);
 
         void CancelOrder(String code);
 

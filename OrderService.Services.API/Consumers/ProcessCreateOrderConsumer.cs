@@ -21,7 +21,7 @@ namespace OrderService.Services.API.Consumers
         private readonly IMapper _mapper;
         private readonly ILogger<ProcessCreateOrderConsumer> _logger;
 
-        public ProcessCreateOrderConsumer(IOptions<RabbitMQConfig> options, IServiceProvider serviceProvider, IMapper mapper, 
+        public ProcessCreateOrderConsumer(IOptions<RabbitMQConfig> options, IServiceProvider serviceProvider, IMapper mapper,
             ILogger<ProcessCreateOrderConsumer> logger)
         {
             _createOrdersQueueName = options.Value.CreateOrdersQueueName;
@@ -66,10 +66,17 @@ namespace OrderService.Services.API.Consumers
             using (var scope = _serviceProvider.CreateScope())
             {
                 var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
-                var order = orderService.CreateOrder(_mapper.Map<Order>(message));
-                
-                _logger.LogInformation($"Pedido {order.Code} criado com sucesso!");
-            }            
+                var result = orderService.CreateOrder(_mapper.Map<Order>(message));
+
+                if (result.IsValid)
+                {
+                    _logger.LogInformation($"Pedido {result.Model.Code} criado com sucesso!");
+                }
+                else
+                {
+                    _logger.LogError($"Não foi possível criar o Pedido {result.Model.Code}:\n{result.Errors}");
+                }
+            }
 
             _channel.BasicAck(eventArgs.DeliveryTag, false);
         }

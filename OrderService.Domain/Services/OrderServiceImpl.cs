@@ -24,10 +24,12 @@ namespace OrderService.Domain.Services
             return orderRepository.GetByCode(code);
         }
 
-        public Order CreateOrder(Order order)
+        public ValidationResult<Order> CreateOrder(Order order)
         {
-            ValidateCustomer(order);
-            ValidateItems(order);
+            var result = new ValidationResult<Order>(order);
+
+            ValidateCustomer(result);
+            ValidateItems(result);
 
             order.Id = Guid.NewGuid();
             order.Code = string.Format("{0:yyyymmdd}_{1}", DateTime.Now, order.CustomerId);
@@ -44,20 +46,25 @@ namespace OrderService.Domain.Services
                 var product = productRepository.GetProduct(orderItem.ProductId);
 
                 if (product == null)
-                    throw new Exception("Produto não encontrado.");
+                    result.Errors.Add($"Produto {orderItem.ProductId} não encontrado.");
+                else
+                {
+                    orderItem.Id = Guid.NewGuid();
+                    orderItem.ProductName = product.Name;
+                    orderItem.UnitPrice = product.Price;
+                    orderItem.Total = orderItem.Quantity * orderItem.UnitPrice;
 
-                orderItem.Id = Guid.NewGuid();
-                orderItem.ProductName = product.Name;
-                orderItem.UnitPrice = product.Price;
-                orderItem.Total = orderItem.Quantity * orderItem.UnitPrice;
-
-                order.Total += orderItem.Total;
+                    order.Total += orderItem.Total;
+                }
             }
 
-            orderRepository.Create(order);
-            orderRepository.Commit();
+            if(result.IsValid)
+            {
+                orderRepository.Create(order);
+                orderRepository.Commit();
+            }
 
-            return order;
+            return result;
         }
 
         public void CancelOrder(string code)
@@ -76,15 +83,15 @@ namespace OrderService.Domain.Services
             orderRepository.Commit();
         }
 
-        private void ValidateCustomer(Order order)
+        private void ValidateCustomer(ValidationResult<Order> result)
         {
-            if (String.IsNullOrEmpty(order.CustomerId))
-                throw new ArgumentException("Missing CustomerId", "CustomerId");
+            if (String.IsNullOrEmpty(result.Model.CustomerId))
+                result.Errors.Add("Missing CustomerId");
         }
-        private void ValidateItems(Order order)
+        private void ValidateItems(ValidationResult<Order> result)
         {
-            if (!order.Items.Any())
-                throw new ArgumentException("Missing items", "Items");
+            if (!result.Model.Items.Any())
+                result.Errors.Add("Missing Items");
         }
     }
 }
