@@ -1,4 +1,5 @@
-﻿using OrderService.Domain.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using OrderService.Domain.Interfaces;
 using OrderService.Domain.Models;
 using OrderService.Infra.Data.Context;
 using System;
@@ -20,7 +21,10 @@ namespace OrderService.Infra.Data.Repository
 
         public Order GetByCode(string code)
         {
-            return orderServiceContext.Orders.FirstOrDefault(order => order.Code.Equals(code));
+            return orderServiceContext
+                .Orders
+                .Include(o => o.Items)
+                .FirstOrDefault(order => order.Code.Equals(code));
         }
 
         public void Create(Order order)

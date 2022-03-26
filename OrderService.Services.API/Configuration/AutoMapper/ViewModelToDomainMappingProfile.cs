@@ -8,7 +8,8 @@ namespace OrderService.Services.API.Configuration.AutoMapper
     {
         public ViewModelToDomainMappingProfile()
         {
-            CreateMap<OrderViewModel, Order>();
+            CreateMap<CreateOrderItemViewModel, OrderItem>();
+            CreateMap<CreateOrderViewModel, Order>();
         }
     }
 }

@@ -11,10 +11,12 @@ namespace OrderService.Domain.Services
     public class OrderServiceImpl : IOrderService
     {
         private readonly IOrderRepository orderRepository;
+        private readonly IProductRepository productRepository;
 
-        public OrderServiceImpl(IOrderRepository orderRepository)
+        public OrderServiceImpl(IOrderRepository orderRepository, IProductRepository productRepository)
         {
             this.orderRepository = orderRepository;
+            this.productRepository = productRepository;
         }
 
         public Order FindOrder(string code)
@@ -39,7 +41,14 @@ namespace OrderService.Domain.Services
 
             foreach (var orderItem in order.Items)
             {
+                var product = productRepository.GetProduct(orderItem.ProductId);
+
+                if (product == null)
+                    throw new Exception("Produto não encontrado.");
+
                 orderItem.Id = Guid.NewGuid();
+                orderItem.ProductName = product.Name;
+                orderItem.UnitPrice = product.Price;
                 orderItem.Total = orderItem.Quantity * orderItem.UnitPrice;
 
                 order.Total += orderItem.Total;
