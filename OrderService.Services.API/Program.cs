@@ -12,6 +12,7 @@ builder.Services.AddSwagerConfiguration();
 builder.Services.AddDatabaseConfiguration(builder.Configuration);
 builder.Services.AddDependencyInjectionConfiguration();
 builder.Services.AddAutoMapperConfig();
+builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQ"));
 
 var app = builder.Build();
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderService.Domain.Models;
 using OrderService.Domain.Services;
 using OrderService.Services.API.Models;
+using OrderService.Services.API.Services;
 
 namespace OrderService.Services.API.Controllers
 {
@@ -12,11 +13,13 @@ namespace OrderService.Services.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService orderService;
+        private readonly IMessageSender messageSender;
         private readonly IMapper mapper;
 
-        public OrdersController(IOrderService orderService, IMapper mapper)
+        public OrdersController(IOrderService orderService, IMessageSender messageSender, IMapper mapper)
         {
             this.orderService = orderService;
+            this.messageSender = messageSender;
             this.mapper = mapper;
         }
 
@@ -35,6 +38,18 @@ namespace OrderService.Services.API.Controllers
             {
                 var resultOrder = orderService.CreateOrder(mapper.Map<Order>(order));
                 return Created($"/api/orders/{resultOrder.Code}", mapper.Map<OrderViewModel>(resultOrder));
+            }
+
+            return BadRequest(ModelState);
+        }
+
+        [HttpPost("CreateOrderAsync")]
+        public IActionResult CreateOrderAsync([FromBody] CreateOrderViewModel order)
+        {
+            if(ModelState.IsValid)
+            {
+                messageSender.PublishOrder(order);
+                return Accepted();
             }
 
             return BadRequest(ModelState);
